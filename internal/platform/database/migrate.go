@@ -1,4 +1,4 @@
-package migration
+package database
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-// Up aplica todas as migrations pendentes embutidas no binário.
-func Up(databaseURL string) error {
+// MigrateUp aplica todas as migrations pendentes embutidas no binário.
+func MigrateUp(databaseURL string) error {
 	src, err := iofs.New(db.Migrations, "migrations")
 	if err != nil {
 		return fmt.Errorf("load migrations: %w", err)

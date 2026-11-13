@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	product "products-api/internal/application/product"
-	httpadapter "products-api/internal/infrastructure/http"
-	"products-api/internal/infrastructure/persistence/config"
-	"products-api/internal/infrastructure/persistence/migration"
-	postgres "products-api/internal/infrastructure/persistence/postgres"
+
+	"products-api/internal/platform/database"
+	"products-api/internal/product"
+	"products-api/internal/product/postgres"
+	"products-api/internal/server"
 
 	"github.com/joho/godotenv"
 )
@@ -25,17 +25,17 @@ func main() {
 		log.Fatal("DATABASE_URL não definida")
 	}
 
-	if err := migration.Up(dbURL); err != nil {
+	if err := database.MigrateUp(dbURL); err != nil {
 		log.Fatal(err)
 	}
 
-	pool, err := config.NewPool(context.Background(), config.DefaultConfig(dbURL, "products-api"))
+	pool, err := database.NewPool(context.Background(), database.DefaultConfig(dbURL, "products-api"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer pool.Close()
 
-	productService := product.NewProductService(postgres.NewPostgresProductRepository(pool))
-	productHandler := httpadapter.NewProductHandler(productService)
-	log.Fatal(http.ListenAndServe(":8080", httpadapter.NewRouter(productHandler)))
+	service := product.NewService(postgres.NewRepository(pool))
+	handler := product.NewHandler(service)
+	log.Fatal(http.ListenAndServe(":8080", server.NewRouter(handler)))
 }
